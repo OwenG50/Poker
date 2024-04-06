@@ -2,47 +2,115 @@ using System.Collections.Generic;
 using UnityEngine;
 using System;
 using UnityEngine.UI;
+using TMPro;
 public class PokerGameController : MonoBehaviour {
+    
+    // Lists
     public List<GameObject> cardPrefabs; // Assign all card prefabs in the inspector
-    private List<Card> deck = new List<Card>();
-    private List<Card> communityCards = new List<Card>();
-    private List<List<Card>> playerHands = new List<List<Card>>();
-    public int numberOfPlayers; // Can be adjusted to change the number of players
+    private List<Card> deck = new List<Card>(); //List of all cards in the deck
+    private List<Card> communityCards = new List<Card>(); //List of all dealt community cards
+    public List<Player> players = new List<Player>(); // list of all players in the game
+    private List<GameObject> playerChipCounts = new List<GameObject>(); // list of all the players chip counts
+    public int startingChips = 1000; // Example starting chips, adjust as needed
+    
+    // Etc...
     public Transform[] playerHandPositions; //Assign in inspector
-    public Button dealFlopButton;
-    public Button dealTurnButton;
-    public Button dealRiverButton;
-    private List<GameObject> instantiatedCommunityCards = new List<GameObject>();
-    public List<List<GameObject>> instantiatedPlayerCards = new List<List<GameObject>>();
-    public Sprite foldedCardSprite;
+    public Transform communityCardsContainer;
+    public int numberOfPlayers; // Can be adjusted to change the number of players
+    public GameState currentState;
+    
+    // UI Components
+    [SerializeField]
+    private GameObject chipCountPrefab; // Assign in Inspector
+    [SerializeField]
+    private Canvas canvas; // Reference to your UI Canvas
 
     void Start() {
-        InitializeDeck();
-        Debug.Log("Deck initialized with " + deck.Count + " cards.");
-
-        ShuffleDeck();
-        Debug.Log("Deck shuffled.");
-
-        DealHands();
-        Debug.Log("Hands dealt to " + numberOfPlayers + " players.");
         
-
+        TransitionToState(GameState.Setup);
+        
         // Other game setup..
     }
-
-    public void DisplayPlayerHands() {
-        for (int playerIndex = 0; playerIndex < playerHandPositions.Length; playerIndex++) {
-            Vector3 startPosition = playerHandPositions[playerIndex].position;
-            List<Card> hand = playerHands[playerIndex];
-            for (int cardIndex = 0; cardIndex < hand.Count; cardIndex++) {
-                // This method now uses the Transform position directly
-                InstantiateCard(hand[cardIndex], startPosition + new Vector3(cardIndex * 2f, 0, 0), 0); // Adjust spacing as needed
-            }
+    
+    
+    public void TransitionToState(GameState newState) {
+        currentState = newState;
+        OnEnterState(newState);
+    }
+    
+    // What happens in each state
+    private void OnEnterState(GameState state) {
+        switch (state) {
+            case GameState.Setup:
+                // Initialize game setup here for Deck and Players
+                InitializeDeck();
+                InitializePlayers();
+                InitializePlayerUI();
+                break;
+            case GameState.PreFlop:
+                // Shuffle and Deal Cards to all players
+                ShuffleDeck();
+                DealCardsToPlayers();
+                break;
+            case GameState.Flop:
+                // Reveal flop cards
+                DealFlop();
+                break;
+            case GameState.Turn:
+                DealTurn();
+                break;
+            case GameState.River:
+                DealRiver();
+                break;
+            case GameState.Showdown:
+                // Determine winner
+                break;
+            case GameState.EndRound:
+                // Cleanup and prepare for next round
+                break;
+            default:
+                Debug.LogError("Unhandled state " + currentState.ToString());
+                break;
         }
     }
-
     
-    void InitializeDeck() {
+    // Example method to move to the next state
+    public void NextState() {
+        switch (currentState) {
+            case GameState.Setup:
+                TransitionToState(GameState.PreFlop);
+                break;
+            case GameState.PreFlop:
+                TransitionToState(GameState.Flop);
+                break;
+            case GameState.Flop:
+                TransitionToState(GameState.Turn);
+                break;
+            case GameState.Turn:
+                TransitionToState(GameState.River);
+                break;
+            case GameState.Showdown:
+                TransitionToState(GameState.Showdown);
+                break;
+            case GameState.EndRound:
+                TransitionToState(GameState.Setup);
+                break;
+        }
+    }
+    
+    // All possible game states
+    public enum GameState {
+        Setup,
+        PreFlop,
+        Flop,
+        Turn,
+        River,
+        Showdown,
+        EndRound
+    }
+    
+
+    void InitializeDeck() {     //Initialize the Deck
         foreach (GameObject cardPrefab in cardPrefabs) {
             string cardName = cardPrefab.name.ToUpper();
             string valuePart = cardName.Substring(0, cardName.Length - 1);
@@ -52,8 +120,29 @@ public class PokerGameController : MonoBehaviour {
             Card card = new Card(ConvertSuit(suit), value, cardImage);
             deck.Add(card);
         }
+        Debug.Log("Deck Initialized");
     }
 
+    void InitializePlayers() {
+        players.Clear(); // Clear existing players list
+    
+        for (int i = 0; i < numberOfPlayers; i++) {
+            Player newPlayer = new Player(startingChips);
+            players.Add(newPlayer);
+        
+            // Create a new empty GameObject for the player's hand
+            GameObject playerHandContainer = new GameObject($"Player {i + 1}'s Hand");
+
+            // Set the position of the player's hand container
+            if (i < playerHandPositions.Length) {
+                playerHandContainer.transform.position = playerHandPositions[i].position;
+            }
+
+            // Store the reference to the player's hand container in the Player class
+            newPlayer.handContainer = playerHandContainer;
+        }
+    }
+    
     int GetCardValue(string valuePart) {
         switch (valuePart) {
             case "A": return 14;
@@ -82,15 +171,9 @@ public class PokerGameController : MonoBehaviour {
             deck[i] = deck[randomIndex];
             deck[randomIndex] = temp;
         }
+        Debug.Log("Deck Shuffled");
     }
-
-    void DealHands() {
-        for (int i = 0; i < numberOfPlayers; i++) {
-            List<Card> hand = new List<Card> { DrawCard(), DrawCard() };
-            playerHands.Add(hand);
-        }
-    }
-
+    
     Card DrawCard() {
         if(deck.Count > 0) {
             Card card = deck[0];
@@ -102,66 +185,78 @@ public class PokerGameController : MonoBehaviour {
         }
     }
 
+    // Method to deal two cards to each player
+    void DealCardsToPlayers() {
+        for (int i = 0; i < players.Count; i++) {
+            if (i < playerHandPositions.Length) {
+                // Deal the first card
+                Card firstCard = DrawCard();
+                players[i].AddCard(firstCard);
+                // Instantiate the first card at the position of the player's hand container
+                GameObject firstCardObj = InstantiateCard(firstCard, Vector3.zero, 0); // Position is now Vector3.zero because local position will be used
+                firstCardObj.transform.SetParent(players[i].handContainer.transform, false);
+                firstCardObj.transform.localPosition = new Vector3(0, 0, 0); // Local position is set after parenting
+
+                // Deal the second card
+                Card secondCard = DrawCard();
+                players[i].AddCard(secondCard);
+                // Instantiate the second card next to the first card
+                GameObject secondCardObj = InstantiateCard(secondCard, Vector3.zero, 1); // Position is now Vector3.zero because local position will be used
+                secondCardObj.transform.SetParent(players[i].handContainer.transform, false);
+                secondCardObj.transform.localPosition = new Vector3(1.5f, 0, 0); // Local position is set after parenting to place it next to the first card
+            }
+        }
+        Debug.Log("Cards dealt to players and placed in their hands.");
+    }
+    
     public void DealFlop() {
         communityCards.Clear(); // Clear previous cards
         DrawCard(); // Burn card
         Vector3 startPosition = new Vector3(-4, 0, 0); // Example start position
+        
         for (int i = 0; i < 3; i++) {
             Card card = DrawCard();
             communityCards.Add(card);
-            InstantiateCard(card, startPosition, i);
+            InstantiateCard(card, startPosition + new Vector3(i * 1.5f, 0, 0), i, -1, true);
         }
-        dealFlopButton.gameObject.SetActive(false);
+        Debug.Log("Flop dealt. Community Cards: " + GetCardNames(communityCards));
     }
-
-
+    
     public void DealTurn() {
         DrawCard(); // Burn card
         Card turnCard = DrawCard();
         communityCards.Add(turnCard); // Add the turn card to the community cards
     
-        // Updated call to match the expected method signature
-        Vector3 startPosition = new Vector3(-4f, 0, 0); // Adjust as needed
-        InstantiateCard(turnCard, startPosition, communityCards.Count - 1);
+        Vector3 startPosition = new Vector3(-4 + 3 * 1.5f, 0, 0); // Adjusting position based on the flop cards
+        InstantiateCard(turnCard, startPosition, communityCards.Count - 1, -1, true);
         Debug.Log("Turn dealt. Community Cards: " + GetCardNames(communityCards));
         
-        dealTurnButton.gameObject.SetActive(false);
     }
 
     public void DealRiver() {
         DrawCard(); // Burn card
         Card riverCard = DrawCard();
-        communityCards.Add(riverCard); // Add the river card to the community cards
-    
-        // Updated call to match the expected method signature
-        Vector3 startPosition = new Vector3(-4f, 0, 0); // Adjust as needed
-        InstantiateCard(riverCard, startPosition, communityCards.Count - 1);
+        communityCards.Add(riverCard);
+
+        Vector3 startPosition = new Vector3(-4 + 4 * 1.5f, 0, 0); // Adjusting position based on the flop and turn cards
+        InstantiateCard(riverCard, startPosition, communityCards.Count - 1, -1, true);
         Debug.Log("River dealt. Community Cards: " + GetCardNames(communityCards));
-        dealRiverButton.gameObject.SetActive(false);
     }
     
-    void InstantiateCard(Card card, Vector3 startPosition, int cardIndex, int playerIndex = -1) {
+    GameObject InstantiateCard(Card card, Vector3 startPosition, int cardIndex, int playerIndex = -1, bool isCommunityCard = false) {
         GameObject cardPrefab = cardPrefabs.Find(prefab => prefab.name.Equals(card.GetPrefabName(), StringComparison.OrdinalIgnoreCase));
         if (cardPrefab != null) {
-            GameObject cardObj = Instantiate(cardPrefab, startPosition + new Vector3(cardIndex * 2f, 0, 0), Quaternion.identity);
-            cardObj.transform.localScale = new Vector3(0.15f, 0.15f, 1); // Adjust as needed
+            GameObject cardObj = Instantiate(cardPrefab, startPosition, Quaternion.identity, isCommunityCard ? communityCardsContainer : null);
+            cardObj.transform.localScale = new Vector3(0.1f, 0.1f, 1); // Adjust scale as needed
 
-            // Add to the appropriate list
-            if (playerIndex == -1) {
-                instantiatedCommunityCards.Add(cardObj);
-            } else {
-                while (instantiatedPlayerCards.Count <= playerIndex) {
-                    instantiatedPlayerCards.Add(new List<GameObject>());
-                }
-                instantiatedPlayerCards[playerIndex].Add(cardObj);
-            }
+            return cardObj;
         } else {
             Debug.LogError("Card prefab not found for: " + card.GetPrefabName());
+            return null;
         }
     }
-
     
-    /// Utility method to convert a list of cards to string for debug logging
+    // Utility method to convert a list of cards to string for debug logging
     string GetCardNames(List<Card> cards) {
         string cardNames = "";
         foreach (Card card in cards) {
@@ -169,44 +264,31 @@ public class PokerGameController : MonoBehaviour {
         }
         return cardNames.TrimEnd(',', ' ');
     }
+    
+    void InitializePlayerUI() {
+        for (int i = 0; i < numberOfPlayers; i++) {
+            if (i < playerHandPositions.Length) {
+                // Instantiate Chip Count UI to the right of the player's cards
+                Vector3 chipPosition = players[i].handContainer.transform.position + new Vector3(2.5f, 0, 0); // Adjust the 2.5f offset as needed
+                GameObject chipCountUI = Instantiate(chipCountPrefab, Vector3.zero, Quaternion.identity, canvas.transform);
+                RectTransform rt = chipCountUI.GetComponent<RectTransform>();
+                rt.anchoredPosition = new Vector2(chipPosition.x, chipPosition.y); // Assuming chipPosition is calculated with screen space in mind
+                chipCountUI.GetComponent<TextMeshProUGUI>().text = $"Chips: {players[i].chips}";
 
-    public void StartNewHand()
-    {
-        // Destroy and clear community cards
-        foreach (GameObject card in instantiatedCommunityCards) {
-            Destroy(card);
-        }
-        instantiatedCommunityCards.Clear();
-
-        // Destroy and clear player hands
-        foreach (List<GameObject> hand in instantiatedPlayerCards) {
-            foreach (GameObject card in hand) {
-                Destroy(card);
+                playerChipCounts.Add(chipCountUI);
             }
-            hand.Clear();
         }
-        instantiatedPlayerCards.Clear();
+    }
 
-        // Reinitialize the game for a new hand
-        deck.Clear();
-        InitializeDeck();
-        ShuffleDeck();
-        playerHands.Clear(); // Clear player hands data
-        DealHands(); // Optionally deal hands again immediately
-
-        // Reset and show UI buttons
-        dealFlopButton.gameObject.SetActive(true);
-        dealTurnButton.gameObject.SetActive(true);
-        dealRiverButton.gameObject.SetActive(true);
+    // Call whenever a player's chip count changes (e.g., after bets, wins, or losses) to update the display.
+    void UpdatePlayerChipsUI() { 
+        for (int i = 0; i < players.Count; i++) {
+            if (i < playerChipCounts.Count) {
+                playerChipCounts[i].GetComponent<Text>().text = $"Chips: {players[i].chips}";
+            }
+        }
     }
     
-    public void MarkHandAsFolded(int playerIndex) {
-        // Assuming you have a reference to the player's hand GameObjects or card images
-        foreach (var cardObj in instantiatedPlayerCards[playerIndex]) {
-            cardObj.GetComponent<SpriteRenderer>().sprite = foldedCardSprite; // Changing the card to a folded graphic
-            //cardObj.SetActive(false);
-        }
-    }
-
+    
     
 }

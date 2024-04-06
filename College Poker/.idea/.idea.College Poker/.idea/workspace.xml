@@ -12,6 +12,7 @@
   </component>
   <component name="HighlightingSettingsPerFile">
     <setting file="file://$PROJECT_DIR$/Assets/Scripts/BettingManager.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Assets/Scripts/Player.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Assets/Scripts/PokerGameController.cs" root0="FORCE_HIGHLIGHTING" />
   </component>
   <component name="MarkdownSettingsMigration">
@@ -80,6 +81,8 @@
       <workItem from="1712180390459" duration="2444000" />
       <workItem from="1712203043495" duration="4754000" />
       <workItem from="1712256005250" duration="2372000" />
+      <workItem from="1712352405706" duration="4990000" />
+      <workItem from="1712367740217" duration="7815000" />
     </task>
     <servers />
   </component>
