@@ -219,14 +219,18 @@ public class PokerGameController : MonoBehaviour {
     }
 
     void ShuffleDeck() {
-        for (int i = 0; i < deck.Count; i++) {
-            Card temp = deck[i];
-            int randomIndex = UnityEngine.Random.Range(i, deck.Count);
-            deck[i] = deck[randomIndex];
-            deck[randomIndex] = temp;
+        // Start from the last element and swap one by one.
+        // We don't need to run for the first element that's why i > 0
+        for (int i = deck.Count - 1; i > 0; i--) {
+            // Pick a random index from 0 to i
+            int randomIndex = UnityEngine.Random.Range(0, i + 1);
+
+            // Swap arr[i] with the element at random index
+            (deck[i], deck[randomIndex]) = (deck[randomIndex], deck[i]);
         }
         Debug.Log("Deck Shuffled");
     }
+
     
     Card DrawCard() {
         if(deck.Count > 0) {
@@ -246,18 +250,20 @@ public class PokerGameController : MonoBehaviour {
                 // Deal the first card
                 Card firstCard = DrawCard();
                 players[i].AddCard(firstCard);
+                
                 // Instantiate the first card at the position of the player's hand container
-                GameObject firstCardObj = InstantiateCard(firstCard, Vector3.zero, 0); // Position is now Vector3.zero because local position will be used
+                GameObject firstCardObj = InstantiateCard(firstCard, Vector3.zero, 0, i, false, 10f); // Adjusted for rotation
                 firstCardObj.transform.SetParent(players[i].handContainer.transform, false);
                 firstCardObj.transform.localPosition = new Vector3(0, 0, 0); // Local position is set after parenting
 
                 // Deal the second card
                 Card secondCard = DrawCard();
                 players[i].AddCard(secondCard);
+                
                 // Instantiate the second card next to the first card
-                GameObject secondCardObj = InstantiateCard(secondCard, Vector3.zero, 1); // Position is now Vector3.zero because local position will be used
+                GameObject secondCardObj = InstantiateCard(secondCard, Vector3.zero, 1, i, false, -10f); // Adjusted for rotation
                 secondCardObj.transform.SetParent(players[i].handContainer.transform, false);
-                secondCardObj.transform.localPosition = new Vector3(1.5f, 0, 0); // Local position is set after parenting to place it next to the first card
+                secondCardObj.transform.localPosition = new Vector3(1f, 0, 0); // Local position is set after parenting to place it next to the first card
                 
                 string playerHand = $"Player {i + 1} Hand: ";
                 foreach (Card card in players[i].handCards) {
@@ -304,18 +310,19 @@ public class PokerGameController : MonoBehaviour {
         Debug.Log("River dealt. Community Cards: " + GetCardNames(communityCards));
     }
     
-    GameObject InstantiateCard(Card card, Vector3 startPosition, int cardIndex, int playerIndex = -1, bool isCommunityCard = false) {
+    GameObject InstantiateCard(Card card, Vector3 startPosition, int cardIndex, int playerIndex = -1, bool isCommunityCard = false, float zRotation = 0f) {
         GameObject cardPrefab = cardPrefabs.Find(prefab => prefab.name.Equals(card.GetPrefabName(), StringComparison.OrdinalIgnoreCase));
         if (cardPrefab != null) {
-            GameObject cardObj = Instantiate(cardPrefab, startPosition, Quaternion.identity, isCommunityCard ? communityCardsContainer : null);
+            Quaternion rotation = Quaternion.Euler(0, 0, zRotation);
+            GameObject cardObj = Instantiate(cardPrefab, startPosition, rotation, isCommunityCard ? communityCardsContainer : null);
             cardObj.transform.localScale = new Vector3(0.1f, 0.1f, 1); // Adjust scale as needed
-
             return cardObj;
         } else {
             Debug.LogError("Card prefab not found for: " + card.GetPrefabName());
             return null;
         }
     }
+
     
     // Utility method to convert a list of cards to string for debug logging
     string GetCardNames(List<Card> cards) {
