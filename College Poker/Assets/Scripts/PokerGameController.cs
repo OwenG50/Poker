@@ -19,13 +19,24 @@ public class PokerGameController : MonoBehaviour {
     public GameState currentState;
     
     // UI Components
-
+    public TextMeshProUGUI chipCountTextPrefab; // Assign in Inspector
+    public Transform chipCountParent;
 
     void Start() {
         
         TransitionToState(GameState.Setup);
         
         // Other game setup..
+    }
+
+    public void SubtractTest()
+    {
+        SubtractChipsFromPlayer(0,50);
+    }
+    
+    public void AddTest()
+    {
+        AddChipsToPlayer(2,50);
     }
     
     
@@ -41,6 +52,7 @@ public class PokerGameController : MonoBehaviour {
                 // Initialize game setup here for Deck and Players
                 InitializeDeck();
                 InitializePlayers();
+                NextState();
                 break;
             case GameState.PreFlop:
                 // Shuffle and Deal Cards to all players
@@ -125,6 +137,8 @@ public class PokerGameController : MonoBehaviour {
             Player newPlayer = new Player(startingChips);
             players.Add(newPlayer);
         
+            Debug.Log($"Player {i + 1} Starting Chips: {newPlayer.chips}");
+            
             // Create a new empty GameObject for the player's hand
             GameObject playerHandContainer = new GameObject($"Player {i + 1}'s Hand");
 
@@ -135,8 +149,53 @@ public class PokerGameController : MonoBehaviour {
 
             // Store the reference to the player's hand container in the Player class
             newPlayer.handContainer = playerHandContainer;
+            
+            /// Instantiate chip count text under the UI parent
+            TextMeshProUGUI chipCountText = Instantiate(chipCountTextPrefab, chipCountParent);
+            chipCountText.transform.localScale = Vector3.one; // Ensure it's not scaled weirdly
+            chipCountText.text = $"Chips: {newPlayer.chips}";
+
+            // Adjust position if necessary. This example positions it at the origin of the parent.
+            chipCountText.rectTransform.anchoredPosition = Vector3.zero;
+            
+            // Keep a reference in Player class if needed for updating later
+            // // Assign the TextMeshProUGUI to the player
+            newPlayer.chipCountText = chipCountText;
+
+            float yOffset = 45;
+            float xOffset = -30;
+            
+            // Position it near the player's hand
+            PositionChipCountText(chipCountText, newPlayer.handContainer.transform.position, yOffset, xOffset);
+            
         }
+        
+        foreach (var player in players) {
+            player.UpdateChipCountDisplay(); // Ensure initial display is correct
+        }
+        
     }
+    
+    void PositionChipCountText(TextMeshProUGUI chipCountText, Vector3 worldPosition, float yOffset, float xOffset) {
+        Canvas canvas = chipCountParent.GetComponent<Canvas>(); // Assuming chipCountParent is your UI parent within a Canvas
+        RectTransform canvasRect = canvas.GetComponent<RectTransform>();
+
+        // Convert world position to screen point
+        Vector3 screenPoint = Camera.main.WorldToScreenPoint(worldPosition);
+
+        // Convert screen point to RectTransform position
+        Vector2 uiPosition;
+        RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRect, screenPoint, canvas.worldCamera, out uiPosition);
+
+        uiPosition.y -= yOffset;
+        uiPosition.x -= xOffset;
+        
+        // Set the position of the TextMeshProUGUI object
+        chipCountText.rectTransform.anchoredPosition = uiPosition;
+    }
+
+    
+    
     
     int GetCardValue(string valuePart) {
         switch (valuePart) {
@@ -199,9 +258,16 @@ public class PokerGameController : MonoBehaviour {
                 GameObject secondCardObj = InstantiateCard(secondCard, Vector3.zero, 1); // Position is now Vector3.zero because local position will be used
                 secondCardObj.transform.SetParent(players[i].handContainer.transform, false);
                 secondCardObj.transform.localPosition = new Vector3(1.5f, 0, 0); // Local position is set after parenting to place it next to the first card
+                
+                string playerHand = $"Player {i + 1} Hand: ";
+                foreach (Card card in players[i].handCards) {
+                    playerHand += $"{card.ToString()}, ";
+                }
+                Debug.Log(playerHand.TrimEnd(',', ' '));
             }
         }
         Debug.Log("Cards dealt to players and placed in their hands.");
+        
     }
     
     public void DealFlop() {
@@ -258,6 +324,23 @@ public class PokerGameController : MonoBehaviour {
             cardNames += card.ToString() + ", ";
         }
         return cardNames.TrimEnd(',', ' ');
+    }
+    
+    void SubtractChipsFromPlayer(int playerIndex, int amount) {
+        if (playerIndex >= 0 && playerIndex < players.Count) {
+            players[playerIndex].SubtractChips(amount);
+        } else {
+            Debug.LogError("Invalid player index.");
+        }
+    }
+    
+    
+    void AddChipsToPlayer(int playerIndex, int amount) {
+        if (playerIndex >= 0 && playerIndex < players.Count) {
+            players[playerIndex].AddChips(amount);
+        } else {
+            Debug.LogError("Invalid player index.");
+        }
     }
     
     

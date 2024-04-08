@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using TMPro;
 
 [System.Serializable]
 public class Player
@@ -13,7 +14,9 @@ public class Player
     public int CurrentBet;
     public bool IsCheckAllowed;
     public bool IsAllIn;
-    public int ChipCount;
+    public TextMeshProUGUI chipCountText;
+
+    
 
     public Player(int startingChips) {
         chips = startingChips;
@@ -36,6 +39,27 @@ public class Player
         handCards.Clear();
         isFolded = false;
     }
+    
+    public void UpdateChipCountDisplay() {
+        if (chipCountText != null) {
+            chipCountText.text = $"Chips: {chips}";
+        }
+    }
+    
+    public void AddChips(int amount) {
+        chips += amount;
+        UpdateChipCountDisplay(); // Update the display after changing the chip count
+    }
+    
+    public void SubtractChips(int amount) {
+        // Ensure the player cannot have negative chips
+        chips = Mathf.Max(0, chips - amount);
+        
+        // Update the UI
+        UpdateChipCountDisplay();
+    }
+    
+    
 
     // Additional methods as needed, e.g., to show cards, calculate hand strength...
 }
