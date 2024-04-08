@@ -2082,7 +2082,7 @@ MonoBehaviour:
   - {fileID: 2866325653778780064, guid: e0f5056b7de06b04f9017179962e62be, type: 3}
   - {fileID: 8177543183355730765, guid: 6da89a38757f17e4eaa0045efe2c21e5, type: 3}
   players: []
-  startingChips: 1000
+  startingChips: 3000
   playerHandPositions:
   - {fileID: 1528926298}
   - {fileID: 1628251334}

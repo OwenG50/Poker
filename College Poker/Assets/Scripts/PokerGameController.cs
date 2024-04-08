@@ -10,7 +10,7 @@ public class PokerGameController : MonoBehaviour {
     private List<Card> deck = new List<Card>(); //List of all cards in the deck
     private List<Card> communityCards = new List<Card>(); //List of all dealt community cards
     public List<Player> players = new List<Player>(); // list of all players in the game
-    public int startingChips = 1000; // Example starting chips, adjust as needed
+    public int startingChips; // Example starting chips, adjust as needed
     
     // Etc...
     public Transform[] playerHandPositions; //Assign in inspector
