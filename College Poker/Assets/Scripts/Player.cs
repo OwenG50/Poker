@@ -59,6 +59,14 @@ public class Player
         UpdateChipCountDisplay();
     }
     
+    public string GetHandAsString() {
+        string handString = "";
+        foreach (Card card in handCards) { // Assuming handCards is a List<Card> of the player's cards
+            handString += card.ToString() + ", "; // Implement ToString() in Card to return a string representation of the card
+        }
+        return handString.TrimEnd(',', ' ');
+    }
+
     
 
     // Additional methods as needed, e.g., to show cards, calculate hand strength...

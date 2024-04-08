@@ -326,6 +326,7 @@ public class PokerGameController : MonoBehaviour {
         return cardNames.TrimEnd(',', ' ');
     }
     
+    // Subtracts chips to player while taking in input values for who and amount
     void SubtractChipsFromPlayer(int playerIndex, int amount) {
         if (playerIndex >= 0 && playerIndex < players.Count) {
             players[playerIndex].SubtractChips(amount);
@@ -334,7 +335,7 @@ public class PokerGameController : MonoBehaviour {
         }
     }
     
-    
+    // Adds chips to player while taking in input values for who and amount
     void AddChipsToPlayer(int playerIndex, int amount) {
         if (playerIndex >= 0 && playerIndex < players.Count) {
             players[playerIndex].AddChips(amount);
@@ -343,5 +344,14 @@ public class PokerGameController : MonoBehaviour {
         }
     }
     
+    // Useful to see how to call to a specific player and debug.log
+    void LogPlayerHandsAndChips() {
+        for (int i = 0; i < players.Count; i++) {
+            Player player = players[i];
+            string playerInfo = $"Player {i + 1}: Hand = [{player.GetHandAsString()}], Chips = {player.chips}";
+            Debug.Log(playerInfo);
+        }
+    }
+
     
 }
