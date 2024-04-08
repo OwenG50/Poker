@@ -10,7 +10,6 @@ public class PokerGameController : MonoBehaviour {
     private List<Card> deck = new List<Card>(); //List of all cards in the deck
     private List<Card> communityCards = new List<Card>(); //List of all dealt community cards
     public List<Player> players = new List<Player>(); // list of all players in the game
-    private List<GameObject> playerChipCounts = new List<GameObject>(); // list of all the players chip counts
     public int startingChips = 1000; // Example starting chips, adjust as needed
     
     // Etc...
@@ -20,10 +19,7 @@ public class PokerGameController : MonoBehaviour {
     public GameState currentState;
     
     // UI Components
-    [SerializeField]
-    private GameObject chipCountPrefab; // Assign in Inspector
-    [SerializeField]
-    private Canvas canvas; // Reference to your UI Canvas
+
 
     void Start() {
         
@@ -45,7 +41,6 @@ public class PokerGameController : MonoBehaviour {
                 // Initialize game setup here for Deck and Players
                 InitializeDeck();
                 InitializePlayers();
-                InitializePlayerUI();
                 break;
             case GameState.PreFlop:
                 // Shuffle and Deal Cards to all players
@@ -264,31 +259,6 @@ public class PokerGameController : MonoBehaviour {
         }
         return cardNames.TrimEnd(',', ' ');
     }
-    
-    void InitializePlayerUI() {
-        for (int i = 0; i < numberOfPlayers; i++) {
-            if (i < playerHandPositions.Length) {
-                // Instantiate Chip Count UI to the right of the player's cards
-                Vector3 chipPosition = players[i].handContainer.transform.position + new Vector3(2.5f, 0, 0); // Adjust the 2.5f offset as needed
-                GameObject chipCountUI = Instantiate(chipCountPrefab, Vector3.zero, Quaternion.identity, canvas.transform);
-                RectTransform rt = chipCountUI.GetComponent<RectTransform>();
-                rt.anchoredPosition = new Vector2(chipPosition.x, chipPosition.y); // Assuming chipPosition is calculated with screen space in mind
-                chipCountUI.GetComponent<TextMeshProUGUI>().text = $"Chips: {players[i].chips}";
-
-                playerChipCounts.Add(chipCountUI);
-            }
-        }
-    }
-
-    // Call whenever a player's chip count changes (e.g., after bets, wins, or losses) to update the display.
-    void UpdatePlayerChipsUI() { 
-        for (int i = 0; i < players.Count; i++) {
-            if (i < playerChipCounts.Count) {
-                playerChipCounts[i].GetComponent<Text>().text = $"Chips: {players[i].chips}";
-            }
-        }
-    }
-    
     
     
 }

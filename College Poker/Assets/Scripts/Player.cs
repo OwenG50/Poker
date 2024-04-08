@@ -9,7 +9,12 @@ public class Player
     public bool isFolded = false;
     public int chips;
     public GameObject handContainer;
-    
+    public bool IsTurn;
+    public int CurrentBet;
+    public bool IsCheckAllowed;
+    public bool IsAllIn;
+    public int ChipCount;
+
     public Player(int startingChips) {
         chips = startingChips;
     }
