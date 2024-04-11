@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using TMPro;
 
@@ -14,6 +15,7 @@ public class Player
     public int CurrentBet;
     public bool IsCheckAllowed;
     public bool IsAllIn;
+    public HandRanks.Hands HandRanks { get; set; } // Allows player to be set a hand rank
     public TextMeshProUGUI chipCountText;
 
     
@@ -66,7 +68,6 @@ public class Player
         }
         return handString.TrimEnd(',', ' ');
     }
-
     
 
     // Additional methods as needed, e.g., to show cards, calculate hand strength...
