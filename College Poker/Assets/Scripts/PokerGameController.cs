@@ -78,12 +78,10 @@ public class PokerGameController : MonoBehaviour
             case GameState.River:
                 DealRiver();
                 DetermineHandRank();
-                DetermineHandWinner();
                 break;
             case GameState.Showdown:
                 // Determine winner
                 Debug.Log("Showdown State called");
-                DealRiver();
                 DetermineHandWinner();
                 break;
             case GameState.EndRound:
@@ -112,8 +110,11 @@ public class PokerGameController : MonoBehaviour
             case GameState.Turn:
                 TransitionToState(GameState.River);
                 break;
-            case GameState.Showdown:
+            case GameState.River:
                 TransitionToState(GameState.Showdown);
+                break;
+            case GameState.Showdown:
+                TransitionToState(GameState.EndRound);
                 break;
             case GameState.EndRound:
                 TransitionToState(GameState.Setup);
@@ -209,18 +210,21 @@ public class PokerGameController : MonoBehaviour
         RectTransform canvasRect = canvas.GetComponent<RectTransform>();
 
         // Convert world position to screen point
-        Vector3 screenPoint = Camera.main.WorldToScreenPoint(worldPosition);
+        if (Camera.main != null)
+        {
+            Vector3 screenPoint = Camera.main.WorldToScreenPoint(worldPosition);
 
-        // Convert screen point to RectTransform position
-        Vector2 uiPosition;
-        RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRect, screenPoint, canvas.worldCamera,
-            out uiPosition);
+            // Convert screen point to RectTransform position
+            Vector2 uiPosition;
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRect, screenPoint, canvas.worldCamera,
+                out uiPosition);
 
-        uiPosition.y -= yOffset;
-        uiPosition.x -= xOffset;
+            uiPosition.y -= yOffset;
+            uiPosition.x -= xOffset;
 
-        // Set the position of the TextMeshProUGUI object
-        chipCountText.rectTransform.anchoredPosition = uiPosition;
+            // Set the position of the TextMeshProUGUI object
+            chipCountText.rectTransform.anchoredPosition = uiPosition;
+        }
     }
 
 
@@ -486,7 +490,7 @@ public class PokerGameController : MonoBehaviour
                     Player winner = winners[0];
                     if (kicker.HasValue)
                     {
-                        Debug.Log($"The Winner by kicker is Player {players.IndexOf(winner) + 1} with {winner.HandRanks} using a {kicker.Value} as a kicker!");
+                        Debug.Log($"The Winner by kicker is Player {players.IndexOf(winner) + 1} with {winner.HandRanks} using a {GetCardNameFromValue(kicker.Value)} as a kicker!");
                     }
                     else
                     {
@@ -505,7 +509,22 @@ public class PokerGameController : MonoBehaviour
         }
     }
 
-
+    public string GetCardNameFromValue(int cardValue)
+    {
+        switch (cardValue)
+        {
+            case 11:
+                return "Jack";
+            case 12:
+                return "Queen";
+            case 13:
+                return "King";
+            case 14:
+                return "Ace";
+            default:
+                return $"{cardValue}";
+        }
+    }
 
     private (List<Player>, int?) DetermineWinnerByKickers(List<Player> tiedPlayers)
     {

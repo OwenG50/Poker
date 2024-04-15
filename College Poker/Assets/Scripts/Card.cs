@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System;
+using Unity.VisualScripting;
 
 [System.Serializable]
 public class Card : IComparable<Card> {
@@ -48,6 +49,8 @@ public class Card : IComparable<Card> {
             value == 13 ? "K" : "A";
         return valueString + suitInitial.ToString().ToLower();
     }
+    
+ 
 
     
     // Additional functionality as needed...
