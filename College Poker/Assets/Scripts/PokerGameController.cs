@@ -82,6 +82,9 @@ public class PokerGameController : MonoBehaviour
                 break;
             case GameState.Showdown:
                 // Determine winner
+                Debug.Log("Showdown State called");
+                DealRiver();
+                DetermineHandWinner();
                 break;
             case GameState.EndRound:
                 // Cleanup and prepare for next round
@@ -447,60 +450,110 @@ public class PokerGameController : MonoBehaviour
         }
     }
 
-    private void DetermineHandWinner() //Determines winner of round (does not yet include kicker)
+    private void DetermineHandWinner()
     {
-        List<Player> playersNotFolded = new List<Player>();
-        foreach (Player player in players)
-        {
-            if (!player.isFolded)
-            {
-                playersNotFolded.Add(player);
-            }
-        }
+        List<Player> playersNotFolded = players.Where(p => !p.isFolded).ToList();
 
         if (playersNotFolded.Count > 0)
         {
             Player handWinner = playersNotFolded[0];
-            int winnerIndex = 0;
+            List<Player> tiedPlayers = new List<Player> { handWinner };
 
             for (int i = 1; i < playersNotFolded.Count; i++)
             {
                 if (handWinner.HandRanks < playersNotFolded[i].HandRanks)
                 {
                     handWinner = playersNotFolded[i];
-                    winnerIndex = i;
+                    tiedPlayers.Clear();
+                    tiedPlayers.Add(handWinner);
                 }
                 else if (handWinner.HandRanks == playersNotFolded[i].HandRanks)
                 {
-                    // Call kicker function if hand ranks are equal
-                    Debug.Log("Actually a tie lol");
+                    tiedPlayers.Add(playersNotFolded[i]);
                 }
             }
 
-            Debug.Log($"The Winner is Player {winnerIndex+1}");
+            if (tiedPlayers.Count > 1)
+            {
+                var (winners, kicker) = DetermineWinnerByKickers(tiedPlayers);
+                if (winners.Count > 1)
+                {
+                    string winnerNames = string.Join(", ", winners.Select(p => $"Player {players.IndexOf(p) + 1}"));
+                    Debug.Log($"It's a tie between {winnerNames}!");
+                }
+                else
+                {
+                    Player winner = winners[0];
+                    if (kicker.HasValue)
+                    {
+                        Debug.Log($"The Winner by kicker is Player {players.IndexOf(winner) + 1} with {winner.HandRanks} using a {kicker.Value} as a kicker!");
+                    }
+                    else
+                    {
+                        Debug.Log($"The Winner is Player {players.IndexOf(winner) + 1} with a {winner.HandRanks}");
+                    }
+                }
+            }
+            else
+            {
+                Debug.Log($"The Winner is Player {players.IndexOf(handWinner) + 1} with a {handWinner.HandRanks}");
+            }
         }
         else
         {
             Debug.Log("No players remain in the hand.");
         }
-/*/
-        Player handWinner = playersNotFolded[0];
-        for (int i = 1; i < playersNotFolded.Count; i++)
+    }
+
+
+
+    private (List<Player>, int?) DetermineWinnerByKickers(List<Player> tiedPlayers)
+    {
+        List<Player> currentBestPlayers = new List<Player> { tiedPlayers[0] };
+        List<int> bestKickers = currentBestPlayers[0].GetKickers().OrderByDescending(v => v).ToList();
+        int? decisiveKicker = null;
+
+        foreach (Player player in tiedPlayers.Skip(1))
         {
-            if (handWinner.HandRanks < playersNotFolded[i].HandRanks)
+            List<int> challengerKickers = player.GetKickers().OrderByDescending(v => v).ToList();
+            bool isTied = true;
+            for (int i = 0; i < Math.Min(bestKickers.Count, challengerKickers.Count); i++)
             {
-                handWinner = playersNotFolded[i];
+                if (challengerKickers[i] > bestKickers[i])
+                {
+                    currentBestPlayers = new List<Player> { player };
+                    bestKickers = challengerKickers;
+                    decisiveKicker = challengerKickers[i];
+                    isTied = false;
+                    break;
+                }
+                else if (challengerKickers[i] < bestKickers[i])
+                {
+                    isTied = false;
+                    break;
+                }
             }
-            else if (handWinner.HandRanks == playersNotFolded[i].HandRanks)
+
+            if (isTied)
             {
-                //Call kicker function
+                if (challengerKickers.SequenceEqual(bestKickers))
+                {
+                    currentBestPlayers.Add(player); // Add player to tied winners if all kickers match
+                }
+                else if (challengerKickers.Count > bestKickers.Count)
+                {
+                    currentBestPlayers = new List<Player> { player };
+                    bestKickers = challengerKickers;
+                    decisiveKicker = challengerKickers[bestKickers.Count];
+                }
             }
         }
 
-        Debug.Log($"The Winner is Player {handWinner[]}");
-        
-        /*/
+        return (currentBestPlayers, decisiveKicker);
     }
+
+
+
 
 }
       

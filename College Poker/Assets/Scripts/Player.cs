@@ -69,7 +69,37 @@ public class Player
         return handString.TrimEnd(',', ' ');
     }
     
+    public List<int> GetKickers()
+{
+    List<int> values = handCards.Select(card => card.value).ToList();
+    switch (HandRanks)
+    {
+        case global::HandRanks.Hands.Pair:
+        case global::HandRanks.Hands.ThreeOfAKind:
+        case global::HandRanks.Hands.FourOfAKind:
+            // Find the value forming the pair/triple/quadruple, exclude from kickers
+            int mainValue = values.GroupBy(v => v)
+                                  .Where(g => g.Count() > 1)
+                                  .OrderByDescending(g => g.Count())
+                                  .ThenByDescending(g => g.Key)
+                                  .Select(g => g.Key).FirstOrDefault();
+            return values.Where(v => v != mainValue).ToList();
+        case global::HandRanks.Hands.FullHouse:
+            // Exclude triple and pair from kickers
+            int tripleValue = values.GroupBy(v => v)
+                                    .Where(g => g.Count() == 3)
+                                    .Select(g => g.Key).FirstOrDefault();
+            int pairValue = values.GroupBy(v => v)
+                                  .Where(g => g.Count() == 2)
+                                  .Select(g => g.Key).FirstOrDefault();
+            return values.Where(v => v != tripleValue && v != pairValue).ToList();
+        default:
+            return values;
+    }
+}
 
+    
+    
     // Additional methods as needed, e.g., to show cards, calculate hand strength...
 }
 
