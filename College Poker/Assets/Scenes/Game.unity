@@ -3464,6 +3464,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2012513611}
   - component: {fileID: 2012513610}
+  - component: {fileID: 2012513612}
   m_Layer: 0
   m_Name: TableBackgroundImage
   m_TagString: Untagged
@@ -3513,7 +3514,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_Sprite: {fileID: 7482667652216324306, guid: 311925a002f4447b3a28927169b83ea6, type: 3}
-  m_Color: {r: 0.037522234, g: 0.3207547, b: 0.16825324, a: 1}
+  m_Color: {r: 0.10295476, g: 0.11320752, b: 0.107653946, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -3523,14 +3524,13 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
---- !u!4 &2012513611
-Transform:
+--- !u!224 &2012513611
+RectTransform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2012513609}
-  serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 4}
   m_LocalScale: {x: 40, y: 20, z: 1}
@@ -3538,6 +3538,19 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 1, y: 1}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!222 &2012513612
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2012513609}
+  m_CullTransparentMesh: 1
 --- !u!1 &2019659916
 GameObject:
   m_ObjectHideFlags: 0
@@ -3682,6 +3695,6 @@ SceneRoots:
   - {fileID: 1042492240}
   - {fileID: 1580945053}
   - {fileID: 42386304}
-  - {fileID: 2012513611}
   - {fileID: 1727300950}
   - {fileID: 1490293850}
+  - {fileID: 2012513611}
